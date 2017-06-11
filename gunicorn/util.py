@@ -6,11 +6,19 @@
 from __future__ import print_function
 
 import email.utils
-import fcntl
+try:
+    import fcntl
+    has_fcntl = True
+except ImportError:
+    has_fcntl = False
 import io
 import os
 import pkg_resources
-import pwd
+try:
+    import pwd
+    has_pwd = True
+except ImportError:
+    has_pwd = False
 import random
 import socket
 import sys
@@ -141,7 +149,10 @@ def load_class(uri, default="gunicorn.workers.sync.SyncWorker",
 
 def get_username(uid):
     """ get the username for a user id"""
-    return pwd.getpwuid(uid).pw_name
+    if has_pwd:
+        return pwd.getpwuid(uid).pw_name
+    else:
+        return 'TODO'
 
 
 def set_owner_process(uid, gid, initgroups=False):
@@ -264,14 +275,22 @@ def parse_address(netloc, default_port=8000):
 
 
 def close_on_exec(fd):
-    flags = fcntl.fcntl(fd, fcntl.F_GETFD)
-    flags |= fcntl.FD_CLOEXEC
-    fcntl.fcntl(fd, fcntl.F_SETFD, flags)
+    if has_fcntl:
+        flags = fcntl.fcntl(fd, fcntl.F_GETFD)
+        flags |= fcntl.FD_CLOEXEC
+        fcntl.fcntl(fd, fcntl.F_SETFD, flags)
+    else:
+        # Windows: TODO
+        pass
 
 
 def set_non_blocking(fd):
-    flags = fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK
-    fcntl.fcntl(fd, fcntl.F_SETFL, flags)
+    if has_fcntl:
+        flags = fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK
+        fcntl.fcntl(fd, fcntl.F_SETFL, flags)
+    else:
+        # Windows: TODO
+        pass
 
 
 def close(sock):

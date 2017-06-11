@@ -6,14 +6,22 @@
 # Please remember to run "make -C docs html" after update "desc" attributes.
 
 import copy
-import grp
+try:
+    import grp
+    has_grp = True
+except ImportError:
+    has_grp = False
 import inspect
 try:
     import argparse
 except ImportError:  # python 2.6
     from . import argparse_compat as argparse
 import os
-import pwd
+try:
+    import pwd
+    has_pwd = True
+except ImportError:
+    has_pwd = False
 import re
 import ssl
 import sys
@@ -422,12 +430,12 @@ def validate_callable(arity):
 
 def validate_user(val):
     if val is None:
-        return os.geteuid()
+        return None
     if isinstance(val, int):
         return val
     elif val.isdigit():
         return int(val)
-    else:
+    elif has_pwd:
         try:
             return pwd.getpwnam(val).pw_uid
         except KeyError:
@@ -436,13 +444,13 @@ def validate_user(val):
 
 def validate_group(val):
     if val is None:
-        return os.getegid()
+        return None
 
     if isinstance(val, int):
         return val
     elif val.isdigit():
         return int(val)
-    else:
+    elif has_grp:
         try:
             return grp.getgrnam(val).gr_gid
         except KeyError:
@@ -1009,7 +1017,7 @@ class User(Setting):
     cli = ["-u", "--user"]
     meta = "USER"
     validator = validate_user
-    default = os.geteuid()
+    default = getattr(os, 'geteuid', None)
     desc = """\
         Switch worker processes to run as this user.
 
@@ -1025,7 +1033,7 @@ class Group(Setting):
     cli = ["-g", "--group"]
     meta = "GROUP"
     validator = validate_group
-    default = os.getegid()
+    default = getattr(os, 'getegid', None)
     desc = """\
         Switch worker process to run as this group.
 

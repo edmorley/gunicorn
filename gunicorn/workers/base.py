@@ -27,8 +27,11 @@ from gunicorn.six import MAXSIZE
 
 class Worker(object):
 
-    SIGNALS = [getattr(signal, "SIG%s" % x)
-            for x in "ABRT HUP QUIT INT TERM USR1 USR2 WINCH CHLD".split()]
+    try:
+        SIGNALS = [getattr(signal, "SIG%s" % x)
+                for x in "ABRT HUP QUIT INT TERM USR1 USR2 WINCH CHLD".split()]
+    except AttributeError:
+        SIGNALS = []
 
     PIPE = []
 
